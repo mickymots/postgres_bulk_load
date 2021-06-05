@@ -21,19 +21,25 @@ logger = logging.getLogger(__name__)
 def execute_batch(data_dir):
         
     files = [f for f in listdir(data_dir) if isfile(join(data_dir, f))]
+   
+    run_batch_fn = partial(data_loader, data_dir)
+    try :
 
-    run_batch_fn = partial(data_loader)
+        print('Threading starts')
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            try:
 
-    print('Threading starts')
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        
-        executor.map(run_batch_fn, files)
-        executor.shutdown(wait=True)
+                executor.map(run_batch_fn, files)
+                executor.shutdown(wait=True)
+            except Exception as e:
+                print(e)
+    except Exception as e:
+        print(e)
 
 
 def main():
-    
-    execute_batch('./data')
+    data_dir = '/root/people/data'
+    execute_batch(data_dir)
   
 
 

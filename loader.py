@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 from datetime import datetime, timedelta
-
+from zipfile import ZipFile
 import pandas as pd
 from sqlalchemy import create_engine
 import psycopg2
@@ -18,6 +18,7 @@ def convert_dtype(x):
     except:        
         return ''
 
+
 def get_headers(df):
     print(df.columns)
     coloumn_of_interest = ["ID", "First_Name_01", "Last_Name_01", "City", "State", "ZIP", "Email", "Email_02" , "Email_03","Phone","CellPhone","Ind_Date_Of_Birth_Year"]
@@ -27,14 +28,16 @@ def get_headers(df):
     return headers
 
 
-def data_loader(file_name):
+def data_loader(dir_name, file_name):
     ts_start = datetime.now()
 
     print(f'loader called on file {file_name}')
     
     try:
 
-        df = pd.read_csv(f'./data/{file_name}', 
+        # df = pd.read_csv(f'./data/{file_name}', 
+        df = pd.read_csv(f'{dir_name}/data/{file_name}', 
+
         header=0, 
         # index_col='ID',
         low_memory=False,
@@ -55,47 +58,39 @@ def data_loader(file_name):
     except Exception as e:
         print(e)
     finally:
-        cleanup(file_name)
+        cleanup(dir_name, file_name)
 
 
-
-def cleanup(file_name):
-    os.remove(f'/home/amit/projects/up_projects/postgres_bulkload/data/tmp_{file_name}.csv') 
+import tarfile
+def cleanup(dir_name, file_name):
+    os.rename(f'{dir_name}/data/{file_name}', f'{dir_name}/processed/{file_name}') 
+    
 
 
 
 def database_load(df, file_name, headers):
 
-    #INPUT YOUR OWN CONNECTION STRING HERE
-    conn_string = "postgresql://pgadmin:amit4488@localhost/espresso"
+    # Write DF to disk 
+    df.to_csv(f'/home/amit/processed/{file_name}' , index=False, header=False, na_rep="") 
+
+
+    # #INPUT CONNECTION STRING HERE
+    conn_string = "postgresql://pgadmin:pgadmin1234@localhost/people"
 
     col_string = ",".join(headers)
 
     sql = f'''
     COPY copy_test_1 ({col_string})
-    FROM '/var/lib/postgresql/tmp_data/tmp_{file_name}.csv' 
+    FROM '/home/amit/processed/{file_name}' 
     DELIMITER ',' CSV;
     '''
 
-    # table_create_sql = '''
-    # CREATE TABLE IF NOT EXISTS copy_test_1 ( ID       decimal,
-    #                                        First_Name_01   text, 
-    #                                        Last_Name_01 text, 
-    #                                        City text, 
-    #                                        State text, 
-    #                                        ZIP int, 
-    #                                        Email  text, 
-    #                                        Email_02 text
-    #                               )
-    # '''
-
     pg_conn = psycopg2.connect(conn_string)
     cur = pg_conn.cursor()
-    # cur.execute(table_create_sql)
-    # cur.execute('TRUNCATE TABLE copy_test_1') #Truncate the table in case you've already run the script before
+    
 
     start_time = datetime.now()
-    df.to_csv(f'/home/amit/projects/up_projects/postgres_bulkload/data/tmp_{file_name}.csv' , index=False, header=False, na_rep="") #Name the .csv file reference in line 29 here
+    
     
     cur.execute(sql)
     pg_conn.commit()
@@ -103,13 +98,11 @@ def database_load(df, file_name, headers):
     print("COPY duration: {} seconds".format(datetime.now() - start_time))
 
 
-    #close connection
-    # conn.close()
 
 
 if __name__ == '__main__':
 
     DATA_FILE = 'ac_0.csv'
 
-    data_loader(DATA_FILE)
+    data_loader("./data",DATA_FILE)
     
