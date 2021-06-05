@@ -36,7 +36,7 @@ def data_loader(dir_name, file_name):
     try:
 
         # df = pd.read_csv(f'./data/{file_name}', 
-        df = pd.read_csv(f'{dir_name}/data/{file_name}', 
+        df = pd.read_csv(f'{dir_name}/{file_name}', 
 
         header=0, 
         # index_col='ID',
@@ -63,7 +63,7 @@ def data_loader(dir_name, file_name):
 
 import tarfile
 def cleanup(dir_name, file_name):
-    os.rename(f'{dir_name}/data/{file_name}', f'/media/data/{file_name}') 
+    os.rename(f'{dir_name}/{file_name}', f'/media/data/{file_name}') 
     
 
 
