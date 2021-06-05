@@ -85,9 +85,25 @@ def database_load(df, file_name, headers):
     DELIMITER ',' CSV;
     '''
 
+    table_create_sql = '''
+    CREATE TABLE IF NOT EXISTS copy_test_1 ( ID       bigint,
+                                           First_Name_01   text, 
+                                           Last_Name_01 text, 
+                                           City text, 
+                                           State text, 
+                                           ZIP int, 
+                                           Email  text, 
+                                           Email_02 text,
+										   Email_03 text default 'None',
+										   Phone float default 0.0, 
+										  CellPhone float default 0, 
+										  Ind_Date_Of_Birth_Year float default 0.0
+                                  )
+    '''
+
     pg_conn = psycopg2.connect(conn_string)
     cur = pg_conn.cursor()
-    
+    cur.execute(table_create_sql)
 
     start_time = datetime.now()
     
