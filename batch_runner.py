@@ -38,7 +38,7 @@ def execute_batch(data_dir):
 
 
 def main():
-    data_dir = '/root/people/data'
+    data_dir = '/root/people'
     execute_batch(data_dir)
   
 
