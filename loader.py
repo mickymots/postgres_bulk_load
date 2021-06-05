@@ -10,6 +10,7 @@ import logging
 
 
 
+
 def convert_dtype(x):
     if not x:
         return ''
@@ -20,23 +21,23 @@ def convert_dtype(x):
 
 
 def get_headers(df):
-    print(df.columns)
+    logging.debug(df.columns)
     coloumn_of_interest = ["ID", "First_Name_01", "Last_Name_01", "City", "State", "ZIP", "Email", "Email_02" , "Email_03","Phone","CellPhone","Ind_Date_Of_Birth_Year"]
 
     headers = list(filter(lambda col: col in df, coloumn_of_interest))
-    print(headers)
+    logging.debug(headers)
     return headers
 
 
-def data_loader(dir_name, file_name):
+def data_loader(file_name):
     ts_start = datetime.now()
 
-    print(f'loader called on file {file_name}')
+    logging.debug(f'loader called on file {file_name}')
     
     try:
 
         # df = pd.read_csv(f'./data/{file_name}', 
-        df = pd.read_csv(f'{dir_name}/{file_name}', 
+        df = pd.read_csv(file_name, 
 
         header=0, 
         # index_col='ID',
@@ -51,37 +52,41 @@ def data_loader(dir_name, file_name):
         # print(df)
 
         database_load(df, file_name, headers)
-        
+        cleanup(file_name)
         ts_end = datetime.now()
 
         logging.info(f'{file_name} Processing Took %s seconds {ts_end - ts_start}')   
     except Exception as e:
-        print(e)
-    finally:
-        cleanup(dir_name, file_name)
+        logging.error(f"Error for file {file_name}")
+        logging.info(e)
+    
 
 
-import tarfile
-def cleanup(dir_name, file_name):
-    os.rename(f'{dir_name}/{file_name}', f'/media/data/{file_name}') 
+def cleanup(file_name):
+    dir = os.path.dirname(file_name)
+    file_base_name = os.path.basename(file_name)
+    archive_name = dir + "/archive/" + file_base_name
+    os.rename(file_name, archive_name ) 
     
 
 
 
 def database_load(df, file_name, headers):
-
+    dir = os.path.dirname(file_name)
+    file_name = os.path.basename(file_name)
+    tmp_name = dir + "/tmp/" + file_name
     # Write DF to disk 
-    df.to_csv(f'/home/amit/processed/{file_name}' , index=False, header=False, na_rep="") 
+    df.to_csv(tmp_name , index=False, header=False, na_rep="") 
 
 
     # #INPUT CONNECTION STRING HERE
-    conn_string = "postgresql://pgadmin:pgadmin1234@localhost/people"
+    conn_string = "postgresql://pgadmin:amit4488@localhost/people"
 
     col_string = ",".join(headers)
 
     sql = f'''
     COPY copy_test_1 ({col_string})
-    FROM '/home/amit/processed/{file_name}' 
+    FROM '/var/lib/postgresql/tmp_data/{file_name}' 
     DELIMITER ',' CSV;
     '''
 
@@ -111,7 +116,7 @@ def database_load(df, file_name, headers):
     cur.execute(sql)
     pg_conn.commit()
     cur.close()
-    print("COPY duration: {} seconds".format(datetime.now() - start_time))
+    logging.debug("COPY duration: {} seconds".format(datetime.now() - start_time))
 
 
 

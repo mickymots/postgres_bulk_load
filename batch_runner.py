@@ -9,37 +9,36 @@ import os
 import logging
 from os import listdir
 from os.path import isfile, join
-from loader import data_loader
-# import asyncio
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
+from df_worker import data_loader
 
 
 # execute the batch of tickers for given numbers of days
 def execute_batch(data_dir):
         
-    files = [f for f in listdir(data_dir) if isfile(join(data_dir, f))]
-   
-    run_batch_fn = partial(data_loader, data_dir)
+    files = [data_dir + f for f in listdir(data_dir) if isfile(join(data_dir, f))]
+    for f in files:
+        logging.info('files {f}')
+    run_batch_fn = partial(data_loader)
     try :
 
-        print('Threading starts')
         with ThreadPoolExecutor(max_workers=8) as executor:
-            try:
-
-                executor.map(run_batch_fn, files)
-                executor.shutdown(wait=True)
-            except Exception as e:
-                print(e)
+            executor.map(run_batch_fn, files)
+            executor.shutdown(wait=True)
+           
     except Exception as e:
-        print(e)
+        logging.error(e)
 
 
 def main():
-    data_dir = '/root/people'
+    logging.basicConfig(filename='batch_runner.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+    logging.info('Started')
+    
+    ts_start = datetime.now()
+    data_dir = './data/'
     execute_batch(data_dir)
+
+    logging.info(f'Processing Took %s seconds {datetime.now() - ts_start}')  
+    logging.info('Finished')
   
 
 
