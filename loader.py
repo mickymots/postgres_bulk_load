@@ -63,7 +63,7 @@ def data_loader(dir_name, file_name):
 
 import tarfile
 def cleanup(dir_name, file_name):
-    os.rename(f'{dir_name}/data/{file_name}', f'{dir_name}/processed/{file_name}') 
+    os.rename(f'{dir_name}/data/{file_name}', f'/media/data/{file_name}') 
     
 
 
